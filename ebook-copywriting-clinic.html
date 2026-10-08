@@ -7,61 +7,153 @@
 <title>Ebook · Trigger to Offer</title>
 <style>
 body.lock{margin:0;min-height:100vh;display:grid;place-items:center;background:#1b1917;color:#fff;font:16px/1.6 "Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-#gate{width:min(420px,90vw);padding:34px;border-radius:22px;background:#27231f;border:1px solid #3a342f}
+[hidden]{display:none!important}
+#gate{width:min(440px,92vw);padding:34px;border-radius:22px;background:#27231f;border:1px solid #3a342f;margin:24px 0}
 #gate .t{display:inline-block;background:#ff5834;font:700 11px/1 sans-serif;letter-spacing:.12em;padding:7px 12px;border-radius:99px}
 #gate h1{font-size:26px;line-height:1.2;margin:18px 0 8px}
-#gate p{color:#cfc7c0;margin:0 0 18px;font-size:15px}
-#gate input{width:100%;padding:14px;border-radius:12px;border:1px solid #4a423c;background:#1b1917;color:#fff;font-size:16px;box-sizing:border-box}
-#gate button{width:100%;margin-top:12px;padding:14px;border:0;border-radius:99px;background:#ff5834;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
-#gate button:disabled{opacity:.6;cursor:wait}
+#gate p{color:#cfc7c0;margin:0 0 16px;font-size:15px}
+#gate b{color:#fff}
+#gate input{width:100%;padding:14px;border-radius:12px;border:1px solid #4a423c;background:#1b1917;color:#fff;font-size:16px;box-sizing:border-box;margin-bottom:2px}
+#gate input.code{letter-spacing:6px;text-transform:uppercase;text-align:center;font-size:22px;font-weight:700}
+#gate button{width:100%;margin-top:10px;padding:14px;border:0;border-radius:99px;background:#ff5834;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+#gate button:disabled{opacity:.55;cursor:wait}
+#gate .links{margin-top:14px;font-size:14px;color:#a89f97;text-align:center}
+#gate .links a{color:#ff9a80;cursor:pointer;text-decoration:underline}
 #msg{margin-top:12px;color:#ff9a80;font-size:14px;min-height:20px}
+.price{font-size:30px;font-weight:800;color:#ff5834;margin:4px 0 14px}
+.box{background:#1b1917;border:1px dashed #4a423c;border-radius:14px;padding:14px;margin:12px 0;text-align:center;font-size:14px;color:#cfc7c0}
+.box img{width:min(260px,100%);border-radius:12px;background:#fff;display:block;margin:0 auto 10px}
+.box .note{font-size:20px;font-weight:800;letter-spacing:2px;color:#fff}
 </style>
 </head>
 <body class="lock">
 <div id="gate">
   <span class="t">TRIGGER TO OFFER</span>
   <h1>Ebook Copywriting Clinic</h1>
-  <p>Nhập mật khẩu đã được gửi qua email của bạn.</p>
-  <form id="f">
-    <input id="pw" type="password" autocomplete="off" placeholder="Mật khẩu" autofocus>
-    <button id="btn">Mở ebook</button>
-  </form>
+
+  <!-- Bước 1: nhập email -->
+  <div id="s1">
+    <p>Nhập email để nhận mã mở ebook.</p>
+    <form id="f1">
+      <input id="em" type="email" inputmode="email" autocomplete="email" placeholder="Email của bạn" required>
+      <button id="b1">Gửi mã vào email</button>
+    </form>
+  </div>
+
+  <!-- Bước 2: nhập mã gửi qua email -->
+  <div id="s2" hidden>
+    <p>Mã 8 ký tự đã được gửi tới <b id="to"></b>. Mã có hiệu lực 15 phút và chỉ dùng một lần. Nếu chưa thấy, hãy kiểm tra cả thư mục Spam.</p>
+    <form id="f2">
+      <input id="pw" class="code" type="text" maxlength="12" autocomplete="off" placeholder="••••••••">
+      <button id="b2">Mở ebook</button>
+    </form>
+    <div class="links"><a id="resend">Gửi lại mã</a> · <a id="back">Đổi email</a></div>
+  </div>
+
+  <!-- Bước 3: email chưa có quyền -> mua ebook -->
+  <div id="s3" hidden>
+    <p>Email <b id="to3"></b> chưa có quyền xem. Đây là tài liệu thuộc quyền sở hữu của <b>Phương Võ</b>. Bạn cần thanh toán để mở ebook.</p>
+    <div class="price">90.000đ</div>
+    <div id="s3a">
+      <form id="f3">
+        <input id="nm" type="text" autocomplete="name" placeholder="Họ tên của bạn" required>
+        <button id="b3">Tạo mã thanh toán</button>
+      </form>
+    </div>
+    <div id="s3b" hidden>
+      <div class="box">
+        <img id="qr" alt="Mã QR thanh toán">
+        <div>Nội dung chuyển khoản (bắt buộc ghi đúng):</div>
+        <div class="note" id="ord"></div>
+      </div>
+      <p>Sau khi chuyển khoản, Phương sẽ kiểm tra và gửi email xác nhận cho bạn. Khi đó, quay lại trang này, nhập lại email để nhận mã mở ebook.</p>
+      <p id="contact" style="font-size:14px"></p>
+    </div>
+    <div class="links"><a id="back3">Quay lại</a></div>
+  </div>
+
   <div id="msg"></div>
 </div>
+
 <script>
-// DÁN URL Web App (kết thúc bằng /exec) - chính là URL form webinar đang dùng
-const API = "https://script.google.com/macros/s/DAN_URL_WEBAPP/exec";
+// ===== CẦN SỬA =====
+const API = "https://script.google.com/macros/s/DAN_URL_WEBAPP/exec";   // URL Web App (kết thúc bằng /exec)
+const PRICE = 90000;
+const BANK = "MB";                 // mã ngân hàng theo VietQR: MB, VCB, TCB, ACB, BIDV, VPB...
+const ACC = "SO_TAI_KHOAN";        // số tài khoản nhận tiền
+const ACC_NAME = "VO NGUYEN THANH PHUONG";   // tên chủ tài khoản (không dấu)
+const CONTACT = "Cần hỗ trợ? Nhắn Phương qua Zalo/Messenger: ĐIỀN_LIÊN_HỆ";
+// ===================
 const $ = id => document.getElementById(id);
 const ERR = {
-  wrong: "Mật khẩu chưa đúng. Vui lòng kiểm tra lại email.",
-  expired: "Bản này đã hết hạn. Vui lòng xin mật khẩu mới.",
-  revoked: "Quyền truy cập này đã bị thu hồi. Vui lòng liên hệ để được hỗ trợ.",
-  empty: "Bạn chưa nhập mật khẩu."
+  bad_email: "Email chưa hợp lệ.",
+  bad_input: "Vui lòng nhập đủ họ tên và email.",
+  too_many: "Bạn thử quá nhiều lần. Vui lòng đợi vài phút rồi thử lại.",
+  revoked: "Quyền truy cập này đã bị thu hồi. Vui lòng liên hệ Phương để được hỗ trợ.",
+  expired_access: "Quyền xem của email này đã hết hạn. Vui lòng liên hệ Phương để gia hạn.",
+  locked: "Bạn nhập sai quá nhiều lần. Vui lòng đợi 15 phút hoặc xin mã mới.",
+  wrong: "Mã chưa đúng. Vui lòng kiểm tra lại email.",
+  expired_code: "Mã đã hết hạn. Bấm “Gửi lại mã” để nhận mã mới.",
+  empty: "Bạn chưa nhập đủ thông tin.",
+  member: "Email này đã có quyền xem. Hãy quay lại và bấm “Gửi mã vào email”."
 };
+let email = "";
+const msg = t => { $("msg").textContent = t || ""; };
+const step = n => { ["s1","s2","s3"].forEach((s,i) => $(s).hidden = (i+1) !== n); msg(""); };
 
-$("f").addEventListener("submit", async e => {
-  e.preventDefault();
-  $("msg").textContent = "Đang kiểm tra…";
-  $("btn").disabled = true;
-  try {
-    const res = await fetch(API, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" }, // text/plain để tránh preflight CORS
-      body: JSON.stringify({ action: "ebook", password: $("pw").value.trim() })
-    });
-    const o = await res.json();
-    if (!o.ok) { $("msg").textContent = ERR[o.error] || "Có lỗi xảy ra, vui lòng thử lại."; $("btn").disabled = false; return; }
-    show(o);
-  } catch (err) {
-    $("msg").textContent = "Không kết nối được. Vui lòng kiểm tra mạng và thử lại.";
-    $("btn").disabled = false;
-  }
-});
+async function api(body) {
+  const res = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });  // text/plain: tránh preflight CORS
+  return res.json();
+}
+async function run(btn, fn) {
+  btn.disabled = true; msg("Đang xử lý…");
+  try { await fn(); } catch (e) { msg("Không kết nối được. Vui lòng kiểm tra mạng và thử lại."); }
+  btn.disabled = false;
+}
+
+function showPay(code) {
+  $("to3").textContent = email; step(3);
+  if (code) showOrder(code); else { $("s3a").hidden = false; $("s3b").hidden = true; }
+}
+function showOrder(code) {
+  $("s3a").hidden = true; $("s3b").hidden = false; $("ord").textContent = code;
+  $("qr").src = ACC.indexOf("SO_TAI") === 0 ? "" :
+    `https://img.vietqr.io/image/${BANK}-${ACC}-compact2.png?amount=${PRICE}&addInfo=${encodeURIComponent(code)}&accountName=${encodeURIComponent(ACC_NAME)}`;
+  $("contact").textContent = CONTACT;
+}
+
+async function requestCode(btn) {
+  await run(btn, async () => {
+    const o = await api({ action: "ebook_request", email });
+    if (o.ok) { $("to").textContent = email; step(2); $("pw").value = ""; $("pw").focus(); cooldown(); return; }
+    if (o.error === "not_member") return showPay("");
+    if (o.error === "pending") return showPay(o.code);
+    msg(ERR[o.error] || "Có lỗi xảy ra, vui lòng thử lại.");
+  });
+}
+let timer;
+function cooldown() {
+  let s = 60; const a = $("resend"); a.style.pointerEvents = "none";
+  clearInterval(timer);
+  timer = setInterval(() => { a.textContent = s > 0 ? `Gửi lại mã (${s--}s)` : "Gửi lại mã"; if (s < 0) { clearInterval(timer); a.style.pointerEvents = ""; } }, 1000);
+}
+
+$("f1").addEventListener("submit", e => { e.preventDefault(); email = $("em").value.trim().toLowerCase(); requestCode($("b1")); });
+$("resend").addEventListener("click", () => requestCode($("b1")));
+$("back").addEventListener("click", () => step(1));
+$("back3").addEventListener("click", () => step(1));
+$("f3").addEventListener("submit", e => { e.preventDefault(); run($("b3"), async () => {
+  const o = await api({ action: "ebook_order", email, name: $("nm").value.trim() });
+  if (o.ok) { showOrder(o.code); msg(""); } else msg(ERR[o.error] || "Có lỗi xảy ra, vui lòng thử lại.");
+}); });
+$("f2").addEventListener("submit", e => { e.preventDefault(); run($("b2"), async () => {
+  const o = await api({ action: "ebook", email, password: $("pw").value });
+  if (o.ok) show(o); else msg(ERR[o.error] || "Có lỗi xảy ra, vui lòng thử lại.");
+}); });
 
 function show(o) {
   document.open(); document.write(o.html); document.close();
-  const b = document.body;
-  const s = String(o.who || "").replace(/[<>&"']/g, "");
+  const b = document.body, s = String(o.who || "").replace(/[<>&"']/g, "");
   const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='380' height='240'><text x='24' y='130' transform='rotate(-24 190 120)' font-size='15' font-family='sans-serif' fill='#777' fill-opacity='.35'>" + s + "</text></svg>";
   const w = document.createElement("div");
   w.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:99999;background-image:url(\"data:image/svg+xml," + encodeURIComponent(svg) + "\")";
