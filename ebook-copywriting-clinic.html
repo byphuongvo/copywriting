@@ -102,12 +102,19 @@ const msg = t => { $("msg").textContent = t || ""; };
 const step = n => { ["s1","s2","s3"].forEach((s,i) => $(s).hidden = (i+1) !== n); msg(""); };
 
 async function api(body) {
+  if (API.indexOf("DAN_URL") >= 0) throw new Error("cfg");
   const res = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });  // text/plain: tránh preflight CORS
-  return res.json();
+  const t = await res.text();
+  try { return JSON.parse(t); } catch (_) { throw new Error("bad:" + res.status); }
 }
 async function run(btn, fn) {
   btn.disabled = true; msg("Đang xử lý…");
-  try { await fn(); } catch (e) { msg("Không kết nối được. Vui lòng kiểm tra mạng và thử lại."); }
+  try { await fn(); } catch (e) {
+    const m = String(e.message);
+    msg(m === "cfg" ? "Chưa điền URL Web App vào biến API của trang này." :
+        m.indexOf("bad:") === 0 ? "Máy chủ trả về lỗi (" + m.slice(4) + "). Vào Apps Script → Executions để xem chi tiết." :
+        "Không kết nối được tới Web App. Kiểm tra: URL đúng, và đã deploy với quyền truy cập “Bất kỳ ai”.");
+  }
   btn.disabled = false;
 }
 
