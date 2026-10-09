@@ -483,7 +483,8 @@ var SPEAKER_PHOTO = "";
     }
     $("formerr").textContent = m;
     if (!good){ first.scrollIntoView({behavior:"smooth", block:"center"}); return; }
-    if (f.website.value) return;
+    var hp = f.querySelector(".hp");
+    if (hp && hp.value) return;
     var d = { stage:"register", time:new Date().toISOString(), name:f.name.value.trim(), email:f.email.value.trim(), phone:f.phone.value.trim(), role:vals(f,"role")[0], consent:"Đồng ý" };
     var btn = $("go"); btn.disabled = true; btn.textContent = "Đang gửi…";
     send(d, function(){
