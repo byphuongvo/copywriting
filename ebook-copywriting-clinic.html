@@ -40,6 +40,10 @@ body.lock{margin:0;min-height:100vh;display:grid;place-items:center;background:#
 .warn b{color:#fff}
 .okmark{width:64px;height:64px;border-radius:50%;background:#ff5834;color:#fff;font-size:34px;line-height:64px;text-align:center;margin:8px auto 14px;font-weight:800}
 #s5{text-align:center}#s5 h2{font-size:22px;margin:0 0 12px}
+.policy{background:#1b1917;border:1px solid #3a342f;border-left:4px solid #ff5834;border-radius:12px;padding:12px 14px;margin:6px 0 4px;font-size:13.5px;line-height:1.55;color:#cfc7c0;max-height:260px;overflow:auto}
+.policy b{color:#fff}.policy ol{margin:8px 0 8px 18px;padding:0}.policy li{margin-bottom:6px}
+.agree{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#e6dfd8;margin:12px 0 2px;cursor:pointer;line-height:1.5}
+#gate .agree input{width:22px;height:22px;flex:0 0 22px;margin:1px 0 0;padding:0;accent-color:#ff5834}
 </style>
 </head>
 <body class="lock">
@@ -73,7 +77,18 @@ body.lock{margin:0;min-height:100vh;display:grid;place-items:center;background:#
     <div id="s3a">
       <form id="f3">
         <input id="nm" type="text" autocomplete="name" placeholder="Họ tên của bạn" required>
-        <button id="b3">Tạo mã thanh toán</button>
+        <div class="policy">
+          <b>QUY ĐỊNH SỬ DỤNG TÀI LIỆU</b><br>
+          Đây là tài liệu có trả phí, thuộc quyền sở hữu của Phương Võ. Để bảo vệ quyền lợi của tác giả và những người đã mua, bạn vui lòng tuân thủ:
+          <ol>
+            <li><b>Chỉ dùng cho cá nhân bạn.</b> Không chia sẻ mã, link hoặc nội dung tài liệu cho bất kỳ ai.</li>
+            <li><b>Không sao chép.</b> Không tải về máy, không lưu lại, không chụp màn hình hay quay màn hình, không đăng lại dưới bất kỳ hình thức nào.</li>
+            <li><b>Mọi lượt xem đều có dấu nhận diện.</b> Tên và email của bạn được hiển thị dưới dạng watermark trên từng trang. Nếu nội dung bị lan truyền, team Phương Võ sẽ truy ra nguồn từ watermark này.</li>
+            <li><b>Hậu quả khi vi phạm.</b> Quyền truy cập của bạn sẽ bị thu hồi ngay, và Phương Võ có quyền yêu cầu bồi thường thiệt hại hoặc khởi kiện theo quy định về bản quyền.</li>
+          </ol>
+        </div>
+        <label class="agree"><input type="checkbox" id="ag"><span>Tôi đã đọc và đồng ý với quy định sử dụng tài liệu.</span></label>
+        <button id="b3" disabled>Tạo mã thanh toán</button>
       </form>
     </div>
     <div id="s3b" hidden>
@@ -143,11 +158,13 @@ const ERR = {
   wrong: "Mã chưa đúng. Vui lòng kiểm tra lại email.",
   expired_code: "Mã đã hết hạn. Bấm “Gửi lại mã” để nhận mã mới.",
   empty: "Bạn chưa nhập đủ thông tin.",
+  need_agree: "Bạn cần tick đồng ý quy định sử dụng tài liệu để tiếp tục.",
   member: "Email này đã có quyền xem. Hãy quay lại và bấm “Gửi mã vào email”.",
   bad_image: "Không đọc được hình hoặc hình quá lớn. Vui lòng chọn lại hình khác.",
   bad_order: "Không tìm thấy đơn của email này. Hãy quay lại và tạo mã thanh toán."
 };
 let email = "", orderCode = "", imgData = "";
+const errMsg = o => ERR[o.error] || ("Có lỗi xảy ra, vui lòng thử lại." + (o.error ? " (mã: " + o.error + ")" : ""));
 const msg = t => { $("msg").textContent = t || ""; };
 const step = n => { ["s1","s2","s3","s4","s5"].forEach((s,i) => $(s).hidden = (i+1) !== n); msg(""); window.scrollTo(0, 0); };
 
@@ -191,7 +208,7 @@ async function requestCode(btn) {
     if (o.ok) { $("to").textContent = email; step(2); $("pw").value = ""; $("pw").focus(); cooldown(); return; }
     if (o.error === "not_member") return showPay("");
     if (o.error === "pending") return showPay(o.code, o.billed);
-    msg(ERR[o.error] || "Có lỗi xảy ra, vui lòng thử lại.");
+    msg(errMsg(o));
   });
 }
 let timer;
@@ -205,13 +222,14 @@ $("f1").addEventListener("submit", e => { e.preventDefault(); email = $("em").va
 $("resend").addEventListener("click", () => requestCode($("b1")));
 $("back").addEventListener("click", () => step(1));
 $("back3").addEventListener("click", () => step(1));
-$("f3").addEventListener("submit", e => { e.preventDefault(); run($("b3"), async () => {
-  const o = await api({ action: "ebook_order", email, name: $("nm").value.trim() });
-  if (o.ok) { if (o.billed) { $("to5").textContent = email; step(5); } else { showOrder(o.code); msg(""); } } else msg(ERR[o.error] || "Có lỗi xảy ra, vui lòng thử lại.");
+$("ag").addEventListener("change", () => { $("b3").disabled = !$("ag").checked; });
+$("f3").addEventListener("submit", e => { e.preventDefault(); if (!$("ag").checked) return msg(ERR.need_agree); run($("b3"), async () => {
+  const o = await api({ action: "ebook_order", email, name: $("nm").value.trim(), agree: true });
+  if (o.ok) { if (o.billed) { $("to5").textContent = email; step(5); } else { showOrder(o.code); msg(""); } } else msg(errMsg(o));
 }); });
 $("f2").addEventListener("submit", e => { e.preventDefault(); run($("b2"), async () => {
   const o = await api({ action: "ebook", email, password: $("pw").value });
-  if (o.ok) show(o); else msg(ERR[o.error] || "Có lỗi xảy ra, vui lòng thử lại.");
+  if (o.ok) show(o); else msg(errMsg(o));
 }); });
 
 // ----- bước thanh toán: chép, tiếp theo, tải hình -----
@@ -255,7 +273,7 @@ $("fl").addEventListener("change", async () => {
 $("f4").addEventListener("submit", e => { e.preventDefault(); if (!imgData) return msg("Bạn chưa chọn hình giao dịch.");
   run($("b4"), async () => {
     const o = await api({ action: "ebook_bill", email, code: orderCode, image: imgData });
-    if (o.ok) { $("to5").textContent = email; step(5); } else msg(ERR[o.error] || "Có lỗi xảy ra, vui lòng thử lại.");
+    if (o.ok) { $("to5").textContent = email; step(5); } else msg(errMsg(o));
   });
 });
 
